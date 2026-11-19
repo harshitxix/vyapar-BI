@@ -9,44 +9,66 @@ A production-grade, AI-powered market intelligence feed and emerging trend detec
 The platform operates on a modular, decoupled, asynchronous pipeline designed for high throughput, zero-hallucination factual synthesis, and low-latency personalized delivery.
 
 ```mermaid
-flowchart TD
-    subgraph Sourcing["1. Multi-Source Ingestion"]
-        S1["Economic Times Retail"]
-        S2["Livemint"]
-        S3["Inc42"]
-        S4["Financial Express"]
-        S5["Business Standard"]
-        S1 & S2 & S3 & S4 & S5 --> IngestPipeline["Ingestion Pipeline (APScheduler)"]
-        IngestPipeline --> Dedupe["Deduplication Engine<br/>SHA256 & SimHash"]
+graph TD
+    subgraph Ingestion [1. Multi-Source Ingestion]
+        S1[Economic Times Retail]
+        S2[Livemint]
+        S3[Inc42]
+        S4[Financial Express]
+        S5[Business Standard]
+        Pipeline[Ingestion Pipeline - APScheduler]
+        Dedupe[Deduplication Engine - SHA256 and SimHash]
+        
+        S1 --> Pipeline
+        S2 --> Pipeline
+        S3 --> Pipeline
+        S4 --> Pipeline
+        S5 --> Pipeline
+        Pipeline --> Dedupe
     end
 
-    subgraph Processing["2. AI Enrichment & Vectorization"]
-        Dedupe --> DB[(PostgreSQL Database)]
-        DB --> AIWorker["AI Enrichment Worker (Groq LPU)"]
-        AIWorker --> AIOutput["Factual Summaries<br/>Taxonomy Tags & Entities<br/>Kirana Relevance Score (0-100)"]
-        AIOutput --> DB
-        DB --> EmbedWorker["Embedding Service<br/>FastEmbed ONNX MiniLM"]
-        EmbedWorker --> DB
+    subgraph Storage [Database Layer]
+        DB[(PostgreSQL Database)]
     end
 
-    subgraph Intelligence["3. Trend Discovery Engine"]
-        DB --> Cluster["Agglomerative Clustering<br/>Noise Filtering (≥3 articles, ≥2 sources)"]
-        Cluster --> Temporal["Temporal Velocity & Momentum<br/>Simpson's Publisher Diversity"]
-        Temporal --> Synthesis["Grounded LLM Synthesis<br/>Zero-Hallucination Naming"]
-        Synthesis --> TrendStore["Trend Storage & Snapshots"]
-        TrendStore --> DB
+    subgraph Enrichment [2. AI Enrichment and Vectorization]
+        AIWorker[AI Enrichment Worker - Groq LPU]
+        AIOutput[Factual Summaries, Taxonomy, Kirana Score]
+        EmbedWorker[Embedding Service - FastEmbed ONNX]
+        
+        AIWorker --> AIOutput
     end
 
-    subgraph Personalization["4. Personalization & Delivery"]
-        DB --> CandidateGen["Candidate Generation<br/>Indexed Query (Top 150)"]
-        CandidateGen --> Scorer["Deterministic 8-Signal Scoring<br/>+ Exponential Freshness Decay"]
-        Scorer --> Diversity["Sliding-Window Diversity Re-Ranking<br/>Anti-Fatigue Penalties"]
-        Diversity --> API["FastAPI REST Endpoints<br/>/feed/for-you | /trends/for-you"]
-        API --> Mobile["React Native Mobile App<br/>Expo / TypeScript"]
-        Mobile --> Interaction["Interaction Tracker<br/>Views, Reads, Bookmarks, Skips"]
-        Interaction --> Adaptive["Adaptive Learning Engine<br/>14-Day Half-Life Decay"]
-        Adaptive --> DB
+    subgraph Intelligence [3. Trend Discovery Engine]
+        Cluster[Agglomerative Clustering - Noise Filtering]
+        Temporal[Temporal Velocity and Momentum]
+        Synthesis[Grounded LLM Synthesis]
+        
+        Cluster --> Temporal
+        Temporal --> Synthesis
     end
+
+    subgraph Personalization [4. Personalization and Delivery]
+        CandidateGen[Candidate Generation - Top 150]
+        Scorer[Deterministic 8-Signal Scoring]
+        Diversity[Sliding-Window Diversity Re-Ranking]
+        API[FastAPI REST Endpoints]
+        Mobile[React Native Mobile App - Expo]
+        
+        CandidateGen --> Scorer
+        Scorer --> Diversity
+        Diversity --> API
+        API --> Mobile
+    end
+
+    Dedupe --> DB
+    DB --> AIWorker
+    AIOutput --> DB
+    DB --> EmbedWorker
+    EmbedWorker --> DB
+    DB --> Cluster
+    Synthesis --> DB
+    DB --> CandidateGen
 ```
 
 ---
@@ -56,20 +78,20 @@ flowchart TD
 The detailed data flow from raw feed capture to client-side adaptive presentation is illustrated below:
 
 ```mermaid
-flowchart LR
-    A["Raw Feeds<br/>(RSS / REST / HTML)"] --> B["Canonical Article Normalization"]
-    B --> C{"Duplicate?"}
-    C -- "Yes" --> D["Discard / Update Metrics"]
-    C -- "No" --> E["Persist Raw Article"]
-    E --> F["Async AI Worker (Groq)"]
-    F --> G["Extract Entities, Topics, Kirana Score"]
-    G --> H["FastEmbed Vector Generation"]
-    H --> I["Periodic Trend Run (APScheduler)"]
-    I --> J["Agglomerative Semantic Clusters"]
-    J --> K["Temporal Scoring & Lifecycle State"]
-    K --> L["Deterministic Personalization Engine"]
-    L --> M["FastAPI Async Gateway"]
-    M --> N["Mobile Feed (For You / Trends / Following / Latest)"]
+graph LR
+    A[Raw Feeds] --> B[Canonical Normalization]
+    B --> C{Is Duplicate?}
+    C -->|Yes| D[Discard]
+    C -->|No| E[Persist Raw Article]
+    E --> F[Async AI Worker - Groq]
+    F --> G[Extract Entities and Scores]
+    G --> H[FastEmbed Vectorization]
+    H --> I[Periodic Trend Run]
+    I --> J[Semantic Clusters]
+    J --> K[Temporal Scoring]
+    K --> L[Personalization Engine]
+    L --> M[FastAPI Gateway]
+    M --> N[Mobile Client Feed]
 ```
 
 ---
@@ -79,12 +101,12 @@ flowchart LR
 The project is developed in structured phases, each delivering verifiable end-to-end functionality backed by automated test suites.
 
 ```mermaid
-flowchart LR
-    P1["Phase 1: Ingestion Engine<br/>Status: COMPLETED"] --> P2["Phase 2: AI Enrichment<br/>Status: COMPLETED"]
-    P2 --> P3["Phase 3: Trend Intelligence<br/>Status: COMPLETED"]
-    P3 --> P4["Phase 4: Personalization<br/>Status: COMPLETED"]
-    P4 --> P5["Phase 5: Real-Time Alerts<br/>Status: PLANNED"]
-    P5 --> P6["Phase 6: Multi-Tenant Scale<br/>Status: PLANNED"]
+graph LR
+    P1[Phase 1: Ingestion Engine<br/>Status: COMPLETED] --> P2[Phase 2: AI Enrichment<br/>Status: COMPLETED]
+    P2 --> P3[Phase 3: Trend Intelligence<br/>Status: COMPLETED]
+    P3 --> P4[Phase 4: Personalization<br/>Status: COMPLETED]
+    P4 --> P5[Phase 5: Real-Time Alerts<br/>Status: PLANNED]
+    P5 --> P6[Phase 6: Multi-Tenant Scale<br/>Status: PLANNED]
 ```
 
 ### Phase Progression Summary
