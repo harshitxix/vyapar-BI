@@ -1,4 +1,4 @@
-# Vyapar Market Intelligence and Trend Platform
+# Vyapar BI
 
 A production-grade, AI-powered market intelligence feed and emerging trend detection platform tailored for retail, kirana, grocery, and FMCG businesses in India.
 
@@ -277,3 +277,6 @@ npm start
 | Users | `GET` | `/entities` | Browse canonical entities registry |
 | Feedback | `POST`| `/interactions` | Record user interaction event (view, read, bookmark) |
 | Privacy | `POST`| `/users/me/preferences/reset` | Reset learned weights to baseline profile |
+
+
+Made with efforts by @harshitxix
